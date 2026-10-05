@@ -117,4 +117,29 @@ static inline float fnlPeriodicPerlin(uint32_t seed, const float *p,
     float xy1 = fnlp_lerp(fnlp_lerp(v[4],v[5],t[0]),fnlp_lerp(v[6],v[7],t[0]),t[1]);
     return fnlp_lerp(xy0,xy1,t[2]) * 0.964921414852142333984375f;
 }
+
+/* Aperiodic world-space 3D Perlin noise for CPU Sdf3 displacement. Coordinates
+ * are in lattice units; callers admit the same signed 2^20 range as value3.
+ * Integer lattice identities are hashed through uint32 to avoid signed overflow. */
+static inline float fnlPerlinNoise3(uint32_t seed, const float *p) {
+    uint32_t c0[3],c1[3];
+    float delta[3],t[3],v[8];
+    for (uint32_t a=0;a<3;a++) {
+        float cell=floorf(p[a]);
+        int32_t base=(int32_t)cell;
+        c0[a]=(uint32_t)base;
+        c1[a]=c0[a]+1u;
+        delta[a]=p[a]-cell;
+        t[a]=fnlp_quintic(delta[a]);
+    }
+    for (uint32_t i=0;i<8;i++) {
+        float d[3]={delta[0]-(float)(i&1u),delta[1]-(float)((i>>1)&1u),
+                    delta[2]-(float)((i>>2)&1u)};
+        v[i]=fnlp_gradient(seed,(i&1u)?c1[0]:c0[0],(i&2u)?c1[1]:c0[1],
+                           (i&4u)?c1[2]:c0[2],d,3u);
+    }
+    float xy0=fnlp_lerp(fnlp_lerp(v[0],v[1],t[0]),fnlp_lerp(v[2],v[3],t[0]),t[1]);
+    float xy1=fnlp_lerp(fnlp_lerp(v[4],v[5],t[0]),fnlp_lerp(v[6],v[7],t[0]),t[1]);
+    return fnlp_lerp(xy0,xy1,t[2])*0.964921414852142333984375f;
+}
 #endif
