@@ -142,4 +142,42 @@ static inline fnlp_cellular_result fnlPeriodicCellular(uint32_t seed,const float
     if(metric==0u) {out.f1=sqrtf(out.f1);out.f2=sqrtf(out.f2);}
     return out;
 }
+
+/* Aperiodic 3D cellular distances for CPU Sdf3 displacement. Feature-cell
+ * identities are signed lattice coordinates encoded as uint32; callers bound
+ * p to +/-2^20. Metrics follow the periodic implementation's fixed jitter and
+ * bounded search; no coordinate wrapping is applied. */
+static inline fnlp_cellular_result fnlAperiodicCellular3(uint32_t seed,const float *p,uint32_t metric) {
+    int32_t center[3];
+    float fraction[3];
+    for(uint32_t a=0;a<3;a++) {
+        float base=floorf(p[a]+0.5f);
+        center[a]=(int32_t)base;
+        fraction[a]=p[a]-base;
+    }
+    int radius=metric==1u?3:2;
+    const float jitter=0.39614353f;
+    fnlp_cellular_result out={0};
+    out.f1=out.f2=0x1.fffffep127f;
+    for(int x=-radius;x<=radius;x++) for(int y=-radius;y<=radius;y++) for(int z=-radius;z<=radius;z++) {
+        int32_t signed_cell[3]={center[0]+x,center[1]+y,center[2]+z};
+        uint32_t hash=fnlp_hash(seed,(uint32_t)signed_cell[0],(uint32_t)signed_cell[1],
+                                    (uint32_t)signed_cell[2]);
+        uint32_t idx=hash&1020u;
+        float dx=((float)x-fraction[0])+FNLP_RAND_VECS_3D[idx]*jitter;
+        float dy=((float)y-fraction[1])+FNLP_RAND_VECS_3D[idx+1u]*jitter;
+        float dz=((float)z-fraction[2])+FNLP_RAND_VECS_3D[idx+2u]*jitter;
+        float distance=metric==0u?(dx*dx+dy*dy)+dz*dz
+            :metric==1u?(fabsf(dx)+fabsf(dy))+fabsf(dz)
+            :fmaxf(fmaxf(fabsf(dx),fabsf(dy)),fabsf(dz));
+        if(distance<out.f1) {
+            out.f2=out.f1;out.f1=distance;
+            out.delta[0]=dx;out.delta[1]=dy;out.delta[2]=dz;
+            out.cell[0]=(uint32_t)signed_cell[0];out.cell[1]=(uint32_t)signed_cell[1];
+            out.cell[2]=(uint32_t)signed_cell[2];out.hash=hash;
+        } else if(distance<out.f2) out.f2=distance;
+    }
+    if(metric==0u) {out.f1=sqrtf(out.f1);out.f2=sqrtf(out.f2);}
+    return out;
+}
 #endif
