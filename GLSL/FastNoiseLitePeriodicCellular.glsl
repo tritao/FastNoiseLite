@@ -247,8 +247,11 @@ fnlp_cellular_result fnlPeriodicCellular(uint seed,vec3 p,uvec3 period,uint dime
         float dx=(float(x)-fraction[0])+vx*jitter;
         float dy=(float(y)-fraction[1])+vy*jitter;
         float dz=dimensions==3u?(float(z)-fraction[2])+FNLP_RAND_VECS_3D[idx+2u]*jitter:0.0;
-        float distance=metric==0u?dx*dx+dy*dy:abs(dx)+abs(dy);
-        if(dimensions==3u) distance+=metric==0u?dz*dz:abs(dz);
+        float distance=metric==0u?dx*dx+dy*dy:metric==1u?abs(dx)+abs(dy):max(abs(dx),abs(dy));
+        if(dimensions==3u) {
+            if(metric==2u) distance=max(distance,abs(dz));
+            else distance+=metric==0u?dz*dz:abs(dz);
+        }
         if(distance<result.distances[0]) {
             result.distances[1]=result.distances[0];result.distances[0]=distance;
             result.identity=uvec4(cell,hash);

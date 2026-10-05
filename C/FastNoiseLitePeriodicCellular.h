@@ -97,7 +97,7 @@ static const float FNLP_RAND_VECS_3D[1024] = {
     -0.7870349638f, 0.03447489231f, 0.6159443543f, 0, -0.2015596421f, 0.6859872284f, 0.6991389226f, 0, -0.08581082512f, -0.10920836f, -0.9903080513f, 0, 0.5532693395f, 0.7325250401f, -0.396610771f, 0, -0.1842489331f, -0.9777375055f, -0.1004076743f, 0, 0.0775473789f, -0.9111505856f, 0.4047110257f, 0, 0.1399838409f, 0.7601631212f, -0.6344734459f, 0, 0.4484419361f, -0.845289248f, 0.2904925424f, 0
 };
 
-/* Fixed jitter, metric 0=Euclidean, 1=Manhattan. F2 counts periodic images.
+/* Fixed jitter, metric 0=Euclidean, 1=Manhattan, 2=Chebyshev. F2 counts periodic images.
  * Validated inputs only; see ProceduralKit FIELDS.md for the search bound. */
 typedef struct fnlp_cellular_result {
     float f1, f2;
@@ -127,8 +127,11 @@ static inline fnlp_cellular_result fnlPeriodicCellular(uint32_t seed,const float
         float dx=((float)x-fraction[0])+vectors[idx]*jitter;
         float dy=((float)y-fraction[1])+vectors[idx+1u]*jitter;
         float dz=dimensions==3u?((float)z-fraction[2])+vectors[idx+2u]*jitter:0.0f;
-        float distance=metric==0u?dx*dx+dy*dy:fabsf(dx)+fabsf(dy);
-        if(dimensions==3u) distance+=metric==0u?dz*dz:fabsf(dz);
+        float distance=metric==0u?dx*dx+dy*dy:metric==1u?fabsf(dx)+fabsf(dy):fmaxf(fabsf(dx),fabsf(dy));
+        if(dimensions==3u) {
+            if(metric==2u) distance=fmaxf(distance,fabsf(dz));
+            else distance+=metric==0u?dz*dz:fabsf(dz);
+        }
         if(distance<out.f1) {
             out.f2=out.f1;out.f1=distance;
             out.cell[0]=cell[0];out.cell[1]=cell[1];out.cell[2]=cell[2];out.hash=hash;
