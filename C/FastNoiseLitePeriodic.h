@@ -74,4 +74,27 @@ static inline float fnlPeriodicValue(uint32_t seed, const float *p,
     float xy1 = fnlp_lerp(fnlp_lerp(v[4], v[5], t[0]), fnlp_lerp(v[6], v[7], t[0]), t[1]);
     return fnlp_lerp(xy0, xy1, t[2]);
 }
+
+/* Aperiodic world-space 3D value noise for CPU SDF displacement. Coordinates
+ * are already in lattice units and must be admitted to the signed 2^20 range.
+ * Unsigned lattice identities preserve continuity across zero and use the
+ * same portable seed/hash and Hermite interpolation as periodic value noise. */
+static inline float fnlValueNoise3(uint32_t seed, const float *p) {
+    uint32_t c0[3], c1[3];
+    float t[3], v[8];
+    for (uint32_t a = 0; a < 3; a++) {
+        float cell = floorf(p[a]);
+        int32_t base = (int32_t)cell;
+        c0[a] = (uint32_t)base;
+        c1[a] = c0[a] + 1u;
+        t[a] = fnlp_hermite(p[a] - cell);
+    }
+    for (uint32_t i = 0; i < 8; i++)
+        v[i] = fnlp_value(seed, (i & 1u) ? c1[0] : c0[0],
+                               (i & 2u) ? c1[1] : c0[1],
+                               (i & 4u) ? c1[2] : c0[2]);
+    float xy0 = fnlp_lerp(fnlp_lerp(v[0], v[1], t[0]), fnlp_lerp(v[2], v[3], t[0]), t[1]);
+    float xy1 = fnlp_lerp(fnlp_lerp(v[4], v[5], t[0]), fnlp_lerp(v[6], v[7], t[0]), t[1]);
+    return fnlp_lerp(xy0, xy1, t[2]);
+}
 #endif
