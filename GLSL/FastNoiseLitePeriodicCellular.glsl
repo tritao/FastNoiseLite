@@ -225,7 +225,7 @@ const float FNLP_RAND_VECS_3D[1024] = float[1024](
     0.1399838409f, 0.7601631212f, -0.6344734459f, 0.0, 0.4484419361f, -0.845289248f, 0.2904925424f, 0.0
 );
 
-struct fnlp_cellular_result { vec2 distances; uvec4 identity; };
+struct fnlp_cellular_result { vec2 distances; uvec4 identity; vec3 delta; };
 fnlp_cellular_result fnlPeriodicCellular(uint seed,vec3 p,uvec3 period,uint dimensions,uint metric) {
     ivec3 center=ivec3(0);vec3 fraction=vec3(0);
     for(uint a=0u;a<dimensions;a++) {
@@ -236,7 +236,7 @@ fnlp_cellular_result fnlPeriodicCellular(uint seed,vec3 p,uvec3 period,uint dime
     int zr=dimensions==3u?radius:0;
     float jitter=dimensions==2u?0.43701595:0.39614353;
     fnlp_cellular_result result;
-    result.distances=vec2(3.402823466e38);result.identity=uvec4(0);
+    result.distances=vec2(3.402823466e38);result.identity=uvec4(0);result.delta=vec3(0);
     for(int x=-radius;x<=radius;x++) for(int y=-radius;y<=radius;y++) for(int z=-zr;z<=zr;z++) {
         uvec3 cell=uvec3(fnlp_wrap(center[0]+x,period[0]),fnlp_wrap(center[1]+y,period[1]),0);
         if(dimensions==3u) cell[2]=fnlp_wrap(center[2]+z,period[2]);
@@ -254,7 +254,7 @@ fnlp_cellular_result fnlPeriodicCellular(uint seed,vec3 p,uvec3 period,uint dime
         }
         if(distance<result.distances[0]) {
             result.distances[1]=result.distances[0];result.distances[0]=distance;
-            result.identity=uvec4(cell,hash);
+            result.identity=uvec4(cell,hash);result.delta=vec3(dx,dy,dz);
         } else if(distance<result.distances[1]) result.distances[1]=distance;
     }
     if(metric==0u) result.distances=sqrt(result.distances);

@@ -101,6 +101,7 @@ static const float FNLP_RAND_VECS_3D[1024] = {
  * Validated inputs only; see ProceduralKit FIELDS.md for the search bound. */
 typedef struct fnlp_cellular_result {
     float f1, f2;
+    float delta[3]; /* Selected spatial feature minus query. */
     uint32_t cell[3], hash;
 } fnlp_cellular_result;
 
@@ -134,6 +135,7 @@ static inline fnlp_cellular_result fnlPeriodicCellular(uint32_t seed,const float
         }
         if(distance<out.f1) {
             out.f2=out.f1;out.f1=distance;
+            out.delta[0]=dx;out.delta[1]=dy;out.delta[2]=dz;
             out.cell[0]=cell[0];out.cell[1]=cell[1];out.cell[2]=cell[2];out.hash=hash;
         } else if(distance<out.f2) out.f2=distance;
     }
