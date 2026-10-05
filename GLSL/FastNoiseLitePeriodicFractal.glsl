@@ -34,6 +34,7 @@ float fnlPeriodicFractal(uint seed,vec3 p,uvec3 period,uint dimensions,
         float n;
         if(basis==0u) n=fnlPeriodicValue(seed+i,q,lattice,dimensions);
         else if(basis==1u) n=fnlPeriodicPerlin(seed+i,q,lattice,dimensions);
+        else if(basis==3u || basis==4u) n=fnlPeriodicSimplexLattice(seed+i,q,lattice,dimensions);
         else {
             fnlp_cellular_result c=fnlPeriodicCellular(seed+i,q,lattice,dimensions,metric);
             n=channel==0u?c.distances[0]:channel==1u?c.distances[1]:c.distances[1]-c.distances[0];

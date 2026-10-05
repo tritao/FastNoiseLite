@@ -27,6 +27,7 @@
 #define FNL_PERIODIC_FRACTAL_H
 #include "FastNoiseLitePeriodicPerlin.h"
 #include "FastNoiseLitePeriodicCellular.h"
+#include "FastNoiseLitePeriodicSimplexLattice.h"
 /* Validated inputs only. basis: value/perlin/cellular=0/1/2.
  * fold: fbm/ridged/turbulence=0/1/2. channel: F1/F2/F2-F1=0/1/2. */
 static inline float fnlPeriodicFractal(uint32_t seed,const float *p,const uint32_t *period,
@@ -39,6 +40,7 @@ static inline float fnlPeriodicFractal(uint32_t seed,const float *p,const uint32
         float n;
         if(basis==0u) n=fnlPeriodicValue(seed+i,q,lattice,dimensions);
         else if(basis==1u) n=fnlPeriodicPerlin(seed+i,q,lattice,dimensions);
+        else if(basis==3u || basis==4u) n=fnlPeriodicSimplexLattice(seed+i,q,lattice,dimensions);
         else {
             fnlp_cellular_result c=fnlPeriodicCellular(seed+i,q,lattice,dimensions,metric);
             n=channel==0u?c.f1:channel==1u?c.f2:c.f2-c.f1;
