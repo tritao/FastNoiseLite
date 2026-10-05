@@ -33,9 +33,13 @@ uint fnlp_wrap(int cell, uint period) {
     uint r = uint(cell < 0 ? -cell : cell) % period;
     return cell < 0 && r != 0u ? period - r : r;
 }
-float fnlp_value(uint seed, uint x, uint y, uint z) {
+uint fnlp_hash(uint seed, uint x, uint y, uint z) {
     uint h = seed ^ (x * 501125321u) ^ (y * 1136930381u) ^ (z * 1720413743u);
     h *= 0x27d4eb2du;
+    return h;
+}
+float fnlp_value(uint seed, uint x, uint y, uint z) {
+    uint h = fnlp_hash(seed, x, y, z);
     h *= h;
     h ^= h << 19;
     return h < 0x80000000u ? float(h) * (1.0 / 2147483648.0)

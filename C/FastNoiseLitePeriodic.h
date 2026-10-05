@@ -36,11 +36,15 @@ static inline uint32_t fnlp_wrap(int32_t cell, uint32_t period) {
     uint32_t r = (uint32_t)(cell < 0 ? -cell : cell) % period;
     return cell < 0 && r != 0u ? period - r : r;
 }
-static inline float fnlp_value(uint32_t seed, uint32_t x, uint32_t y, uint32_t z) {
+static inline uint32_t fnlp_hash(uint32_t seed, uint32_t x, uint32_t y, uint32_t z) {
     uint32_t h = seed ^ (x * UINT32_C(501125321))
                       ^ (y * UINT32_C(1136930381))
                       ^ (z * UINT32_C(1720413743));
     h *= UINT32_C(0x27d4eb2d);
+    return h;
+}
+static inline float fnlp_value(uint32_t seed, uint32_t x, uint32_t y, uint32_t z) {
+    uint32_t h = fnlp_hash(seed, x, y, z);
     h *= h;
     h ^= h << 19;
     /* Interpret the signed two's-complement value without signed overflow
